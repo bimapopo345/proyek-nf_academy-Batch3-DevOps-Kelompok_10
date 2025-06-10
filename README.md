@@ -237,3 +237,172 @@ docker-compose logs prometheus
 ![Grafana Dashboard](docs/images/grafana-dashboard.png)
 
 *Note: Screenshots akan ditambahkan saat implementasi. Gambar di atas hanya placeholder.
+# Testing Guide Details
+
+## Extended Testing Information
+
+### 1. Creating Test Files
+
+#### a. Large Files for Disk Usage Testing
+```bash
+# Linux/Docker method:
+docker exec upload-app dd if=/dev/zero of=/app/uploads/bigfile.dat bs=1M count=120
+
+# Windows method (PowerShell):
+fsutil file createnew bigfile.dat 125829120
+
+# Windows PowerShell alternative:
+$file = [System.IO.File]::Create("bigfile.dat")
+$file.SetLength(125829120)
+$file.Close()
+```
+
+#### b. Test Files for Valid Upload
+```bash
+# Create small test file (1MB)
+dd if=/dev/zero of=test.txt bs=1M count=1
+
+# Create medium test file (50MB)
+dd if=/dev/zero of=test.pdf bs=1M count=50
+```
+
+### 2. Monitoring Details
+
+#### a. Important Metrics
+- `disk_usage_percent`: Current disk usage percentage
+- `upload_total`: Counter of successful uploads
+- `upload_failed`: Counter of failed uploads
+- `http_requests_total`: Total HTTP requests with labels
+- `app_error_500_total`: Total number of 500 errors
+
+#### b. Testing Alert Conditions
+1. Error Rate Alert (>0.05 errors/second):
+```powershell
+# Quick test (30 errors in ~1 second):
+1..30 | ForEach-Object { 
+    curl http://localhost:8000/test500
+    Start-Sleep -Milliseconds 20 
+}
+
+# Sustained test (60 errors in 1 minute):
+1..60 | ForEach-Object { 
+    curl http://localhost:8000/test500
+    Start-Sleep -Seconds 1 
+}
+```
+
+2. Disk Usage Alert (>80% of 150MB):
+```bash
+# Method 1: Single large file
+docker exec upload-app dd if=/dev/zero of=/app/uploads/bigfile.dat bs=1M count=120
+
+# Method 2: Multiple medium files
+for i in {1..3}; do
+    docker exec upload-app dd if=/dev/zero of="/app/uploads/file$i.dat" bs=1M count=40
+done
+```
+
+### 3. Detailed Alert Verification
+
+#### a. Prometheus Query Examples
+```bash
+# Check error rate
+curl -G --data-urlencode "query=rate(http_requests_total{status=\"500\"}[1m])" http://localhost:9091/api/v1/query
+
+# Check disk usage
+curl -G --data-urlencode "query=disk_usage_percent" http://localhost:9091/api/v1/query
+
+# Check upload counts
+curl -G --data-urlencode "query=upload_total" http://localhost:9091/api/v1/query
+curl -G --data-urlencode "query=upload_failed" http://localhost:9091/api/v1/query
+```
+
+#### b. AlertManager Status Check
+```bash
+# Check active alerts
+curl http://localhost:9093/api/v2/alerts
+
+# Check silenced alerts
+curl http://localhost:9093/api/v2/silences
+
+# Check alert status in Prometheus
+curl http://localhost:9091/api/v1/rules
+```
+
+### 4. Common Issues and Solutions
+
+#### a. Alert Not Firing
+1. Check metric values:
+```bash
+# Error rate check
+curl -G --data-urlencode "query=rate(http_requests_total{status=\"500\"}[1m])" http://localhost:9091/api/v1/query
+
+# Disk usage check
+curl -G --data-urlencode "query=disk_usage_percent" http://localhost:9091/api/v1/query
+```
+
+2. Verify alert rules:
+```bash
+# View all rules
+curl http://localhost:9091/api/v1/rules
+
+# Check rule evaluation
+curl http://localhost:9091/api/v1/targets
+```
+
+#### b. File Upload Issues
+1. Permission problems:
+```bash
+# Check upload directory permissions
+docker exec upload-app ls -la /app/uploads
+
+# Fix permissions if needed
+docker exec upload-app chmod 755 /app/uploads
+```
+
+2. Disk space issues:
+```bash
+# Check container disk space
+docker exec upload-app df -h /app/uploads
+
+# Clean up if needed
+docker exec upload-app rm -f /app/uploads/*.dat
+```
+
+### 5. Testing Workflow Example
+
+1. Start with clean state:
+```bash
+# Clear uploads
+docker exec upload-app rm -rf /app/uploads/*
+docker exec upload-app mkdir -p /app/uploads
+docker exec upload-app chmod 755 /app/uploads
+```
+
+2. Test file upload functionality:
+```bash
+# Create and upload test files
+dd if=/dev/zero of=test1.txt bs=1M count=1
+curl -F "file=@test1.txt" http://localhost:8000
+```
+
+3. Test error rate alert:
+```powershell
+# Generate errors
+1..30 | ForEach-Object { 
+    curl http://localhost:8000/test500
+    Start-Sleep -Milliseconds 20 
+}
+```
+
+4. Test disk usage alert:
+```bash
+# Fill disk to trigger alert
+docker exec upload-app dd if=/dev/zero of=/app/uploads/bigfile.dat bs=1M count=120
+```
+
+5. Verify alerts:
+```bash
+# Wait 5 minutes, then check
+curl http://localhost:9093/api/v2/alerts
+```
