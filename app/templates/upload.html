@@ -1,55 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>File Upload System</title>
+  <!-- Original CSS tetap ada -->
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
       margin: 0 auto;
       padding: 20px;
       background-color: #f5f5f5;
     }
-
     .container {
       background-color: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-
     .upload-form {
       margin-top: 20px;
     }
-
     .alert {
       padding: 10px;
       margin: 10px 0;
       border-radius: 4px;
     }
-
     .alert-success {
       background-color: #d4edda;
       border-color: #c3e6cb;
       color: #155724;
     }
-
     .alert-error {
       background-color: #f8d7da;
       border-color: #f5c6cb;
       color: #721c24;
     }
-
     .upload-info {
       margin-top: 15px;
       padding: 10px;
       background-color: #e9ecef;
       border-radius: 4px;
     }
-
     .upload-button {
       background-color: #007bff;
       color: white;
@@ -58,58 +50,156 @@
       border-radius: 4px;
       cursor: pointer;
     }
-
     .upload-button:hover {
       background-color: #0056b3;
     }
-
     progress {
       width: 100%;
       margin-top: 10px;
     }
-  </style>
+  
+<style>
+  .loading {
+    position: relative;
+    pointer-events: none;
+  }
+  .loading::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    border: 2px solid transparent;
+    border-radius: 50%;
+    border-top-color: currentColor;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: translateY(-50%) rotate(360deg); }
+  }
+  .file-display {
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: slideDown 0.3s ease forwards;
+  }
+  @keyframes slideDown {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
-  <div class="container">
-    <h1>File Upload System</h1>
-
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    {% for message in messages %}
-    <div class="alert {% if 'success' in message.lower() %}alert-success{% else %}alert-error{% endif %}">
-      {{ message }}
-    </div>
-    {% endfor %}
-    {% endif %}
-    {% endwith %}
-
-    <div class="upload-info">
-      <h3>Upload Guidelines:</h3>
-      <ul>
-        <li>Maximum file size: 100MB</li>
-        <li>Allowed formats: txt, pdf, png, jpg, jpeg, gif</li>
-      </ul>
+<body class="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-100">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header dengan Tailwind -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-6 mb-8 rounded-lg shadow-lg transform hover:scale-[1.02] transition-transform duration-300">
+      <h1 class="text-2xl md:text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">Proyek DevOps Kelompok 10</h1>
+      <p class="text-center text-blue-100 mt-2 font-medium text-sm md:text-base">File Upload System with Monitoring</p>
     </div>
 
-    <form class="upload-form" method="post" enctype="multipart/form-data">
-      <input type="file" name="file" id="file" accept=".txt,.pdf,.png,.jpg,.jpeg,.gif" required>
-      <button type="submit" class="upload-button">Upload File</button>
-    </form>
+    <div class="container bg-white/80 backdrop-blur-sm shadow-xl rounded-xl p-6 md:p-8">
+      <h1 class="text-xl md:text-2xl text-indigo-800 font-bold mb-4">File Upload System</h1>
+
+      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      {% for message in messages %}
+      <div class="alert mx-auto max-w-lg p-4 md:p-6 {% if "success" in message.lower() %}alert-success{% else %}alert-error{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <!-- Info section dengan Tailwind -->
+      <div class="upload-info mb-6 bg-indigo-50 border border-indigo-100 rounded-lg p-4 md:p-6">
+        <h3 class="text-lg md:text-xl font-semibold text-indigo-700 mb-3">Upload Guidelines:</h3>
+        <ul class="space-y-3 text-gray-700">
+          <li class="flex items-center">
+            <svg class="w-5 h-5 mr-2 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="text-sm md:text-base">Maximum file size: 100MB</span>
+          </li>
+          <li class="flex items-center">
+            <svg class="w-5 h-5 mr-2 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="text-sm md:text-base">Allowed formats: txt, pdf, png, jpg, jpeg, gif</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Form dengan Tailwind -->
+      <form method="post" enctype="multipart/form-data" class="upload-form space-y-6">
+        <div class="flex items-center justify-center w-full">
+          <label class="flex flex-col w-full h-32 md:h-40 border-4 border-dashed border-indigo-200 hover:border-indigo-300 rounded-lg group transition-all duration-300 hover:bg-indigo-50/50 cursor-pointer">
+            <div class="flex flex-col items-center justify-center pt-7">
+              <svg class="w-10 h-10 md:w-12 md:h-12 text-indigo-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              <p class="pt-3 text-sm md:text-base tracking-wider text-gray-400 group-hover:text-gray-500">
+                Select a file to upload
+              </p>
+            </div>
+            <input type="file" name="file" id="file" accept=".txt,.pdf,.png,.jpg,.jpeg,.gif" class="opacity-0 absolute" required />
+          </label>
+        </div>
+        <button type="submit" class="upload-button w-full md:w-auto md:px-8 py-3 text-sm md:text-base transform hover:scale-105 transition-transform duration-200 shadow-lg hover:shadow-xl rounded-lg">
+          Upload File
+        </button>
+      </form>
+    </div>
   </div>
 
   <script>
-    document.querySelector('form').addEventListener('submit', function () {
-      const fileInput = document.getElementById('file');
+    document.querySelector("form").addEventListener("submit", function(event) {
+      const fileInput = document.getElementById("file");
       if (fileInput.files[0]) {
         const maxSize = 100 * 1024 * 1024; // 100MB
         if (fileInput.files[0].size > maxSize) {
-          alert('File is too large! Maximum size is 100MB.');
+          alert("File is too large! Maximum size is 100MB.");
+          event.preventDefault();
+        }
+      }
+    });
+  </script>
+
+  <script>
+    // File input display
+    document.getElementById("file").addEventListener("change", function(e) {
+      const fileName = e.target.files[0]?.name;
+      const fileDisplay = document.createElement("p");
+      fileDisplay.className = "text-sm text-indigo-600 mt-2 text-center transition-all duration-300";
+      fileDisplay.textContent = fileName || "No file selected";
+      
+      // Remove any existing file display
+      const existingDisplay = document.querySelector(".file-display");
+      if (existingDisplay) existingDisplay.remove();
+      
+      fileDisplay.classList.add("file-display");
+      this.parentElement.appendChild(fileDisplay);
+    });
+
+    // Form submission handler
+    document.querySelector("form").addEventListener("submit", function(event) {
+      const fileInput = document.getElementById("file");
+      if (fileInput.files[0]) {
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        if (fileInput.files[0].size > maxSize) {
+          alert("File is too large! Maximum size is 100MB.");
           event.preventDefault();
         }
       }
     });
   </script>
 </body>
-
 </html>
+
+
